@@ -1,98 +1,160 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  Animated,
+  Easing,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import QuickActions from "@/components/home/QuickAction";
+import LocationBadge from "@/components/home/LocationBadge";
+import HelpButton from "@/components/home/HelpButton";
+import LocationFetcher from "@/components/LocationFetcher";
+
+const { width } = Dimensions.get("window");
+
+const COLORS = {
+  red: "#E84C3D",
+  white: "#f7f7F7",
+  textDark: "#1A1A1A",
+  textLight: "#666",
+  textBlue: "#202B5D",
+};
+
+let cachedCoords: { latitude: number; longitude: number } | null = null; // in-memory cache
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const pulse = useRef(new Animated.Value(1)).current;
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(
+    cachedCoords
+  );
+  const [loading, setLoading] = useState(!cachedCoords);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1.08,
+          duration: 1000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const handleLocation = (location: { latitude: number; longitude: number }) => {
+    cachedCoords = location; // cache in memory
+    setCoords(location);
+    setLoading(false);
+  };
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {loading && (
+          <View style={{ marginTop: 20 }}>
+            <ActivityIndicator size="large" color={COLORS.red} />
+            <Text style={{ textAlign: "center", marginTop: 8, color: COLORS.textLight }}>
+              Loading location...
+            </Text>
+          </View>
+        )}
+
+        {/* Only render LocationFetcher if we don't have cached coords */}
+        {!coords && <LocationFetcher onLocation={handleLocation} />}
+
+        {/* Show location badge if we have coordinates */}
+        {coords && (
+          <LocationBadge
+            username="Nebil"
+            city="Addis Ababa"
+            country="Ethiopia"
+            latitude={coords.latitude}
+            longitude={coords.longitude}
+            onTopRightPress={() => console.log("Notification pressed")}
+          />
+        )}
+
+        {/* Central HELP button */}
+        <View style={styles.centerArea}>
+          <View style={styles.ringOuter}>
+            <View style={styles.ringMiddle}>
+              <View style={styles.ringInner}>
+                <HelpButton
+                  onPress={() => {
+                    console.log("HELP pressed, coordinates:", coords);
+               
+                  }}
+                />
+              </View>
+            </View>
+          </View>
+          <Text style={styles.helpInfo}>
+            Press HELP to instantly alert nearby responders with your location.
+          </Text>
+        </View>
+
+        <QuickActions />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  safe: { flex: 1, backgroundColor: COLORS.white },
+  scroll: { paddingBottom: 120, alignItems: "center", backgroundColor: COLORS.white },
+  centerArea: { justifyContent: "center", alignItems: "center", marginTop: 36, width: "100%" },
+  ringOuter: {
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: COLORS.red,
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 12,
+    elevation: 12,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  ringMiddle: {
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: COLORS.red,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  ringInner: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  helpInfo: {
+    marginTop: 20,
+    paddingHorizontal: 40,
+    textAlign: "center",
+    fontSize: 15,
+    color: COLORS.textLight,
+    lineHeight: 20,
+    fontFamily: "DMSansRegular",
   },
 });

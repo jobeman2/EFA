@@ -26,6 +26,23 @@ export const Colors = {
     tabIconSelected: tintColorDark,
   },
 };
+export const COLORS = {
+  red: "#D75A4F",
+  pink: "#FF4C7D",
+  white: "#FFFFFF",
+  bg: "#F7F7F7",
+  textDark: "#1A1A1A",
+  textLight: "#666666",
+  textBlue: "#202B5D",
+};
+
+// Optional: you can also define font sizes, spacing, etc.
+export const SIZES = {
+  small: 12,
+  medium: 16,
+  large: 20,
+};
+
 
 export const Fonts = Platform.select({
   ios: {

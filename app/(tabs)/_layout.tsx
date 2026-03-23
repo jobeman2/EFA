@@ -1,35 +1,32 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
+import { Stack } from "expo-router";
+import Header from "@/components/ui/Header";
+import FloatingNav from "@/components/ui/FloatingNav";
+import { useFonts } from "expo-font";
+import { View } from "react-native";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    DMSans: require("../../assets/fonts/static/DMSans_18pt-Regular.ttf"),
+    DMSansLight: require("../../assets/fonts/static/DMSans_18pt-Light.ttf"),
+    DMSansRegular: require("../../assets/fonts/static/DMSans_18pt-Regular.ttf"),
+    DMSansBold: require("../../assets/fonts/static/DMSans_18pt-Bold.ttf"),
+  });
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  if (!fontsLoaded) {
+    // You could replace this with your SplashScreen or a simple loader
+    return <View style={{ flex: 1, backgroundColor: "#fff" }} />;
+  }
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+    <>
+      <Header title="EFA" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#fff" },
         }}
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+      <FloatingNav />
+    </>
   );
 }
